@@ -14,5 +14,8 @@ class UserDbRepository
     {
     }
 
-
+    public function createUser(array $payload): User
+    {
+        return $this->user->create($payload);
+    }
 }
