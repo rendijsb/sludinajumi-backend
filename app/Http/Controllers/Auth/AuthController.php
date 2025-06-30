@@ -9,42 +9,30 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\Users\UserResource;
 use App\Services\Repositories\UserLogicRepository;
+use App\Services\Repositories\UserDbRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     public function __construct(
-        private readonly UserLogicRepository $userLogicRepository
+        private readonly UserLogicRepository $userLogicRepository,
+        private readonly UserDbRepository $userDbRepository
     ) {}
 
-    public function register(RegisterRequest $request): UserResource
+    public function register(RegisterRequest $request): JsonResponse
     {
-        return $request->responseResource(
-            $this->userLogicRepository->register($request)
-        );
-
         try {
-            $userDTO = UserDTO::fromArray([
-                'name' => $request->name,
-                'email' => $request->email,
-                'phone' => $request->phone,
-                'password' => Hash::make($request->password),
-                'role_id' => Role::where('name', 'user')->first()->id ?? 2,
-            ]);
+            $user = $this->userLogicRepository->register($request->data());
 
-            $user = $this->userRepository->create($userDTO->toArray());
-
-            // Create authentication token
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
                 'success' => true,
                 'message' => 'Reģistrācija veiksmīga',
                 'data' => [
-                    'user' => new UserResource($user->load('role')),
+                    'user' => new UserResource($user->load('roleRelation')),
                     'token' => $token,
                 ]
             ], 201);
@@ -61,7 +49,7 @@ class AuthController extends Controller
     public function login(LoginRequest $request): JsonResponse
     {
         try {
-            $user = $this->userRepository->findByEmail($request->email);
+            $user = $this->userDbRepository->findByEmail($request->email);
 
             if (!$user || !Hash::check($request->password, $user->password)) {
                 throw ValidationException::withMessages([
@@ -86,7 +74,7 @@ class AuthController extends Controller
                 'success' => true,
                 'message' => 'Veiksmīga pieteikšanās',
                 'data' => [
-                    'user' => new UserResource($user->load('role')),
+                    'user' => new UserResource($user->load('roleRelation')),
                     'token' => $token,
                 ]
             ]);
@@ -129,7 +117,7 @@ class AuthController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => new UserResource($request->user()->load('role'))
+            'data' => new UserResource($request->user()->load('roleRelation'))
         ]);
     }
 
@@ -138,16 +126,14 @@ class AuthController extends Controller
         try {
             $user = $request->user();
 
-            // Revoke current token
             $request->user()->currentAccessToken()->delete();
 
-            // Create new token
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'user' => new UserResource($user->load('role')),
+                    'user' => new UserResource($user->load('roleRelation')),
                     'token' => $token,
                 ]
             ]);

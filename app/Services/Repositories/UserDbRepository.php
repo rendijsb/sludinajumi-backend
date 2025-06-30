@@ -16,6 +16,22 @@ class UserDbRepository
 
     public function createUser(array $payload): User
     {
-        return $this->user->create($payload);
+        return $this->user->newQuery()->create($payload);
+    }
+
+    public function findByEmail(string $email): ?User
+    {
+        return $this->user->newQuery()->where(User::EMAIL, $email)->first();
+    }
+
+    public function findById(int $id): ?User
+    {
+        return $this->user->newQuery()->find($id);
+    }
+
+    public function updateUser(User $user, array $payload): User
+    {
+        $user->update($payload);
+        return $user->fresh();
     }
 }
