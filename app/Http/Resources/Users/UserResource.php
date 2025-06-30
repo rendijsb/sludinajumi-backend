@@ -6,11 +6,14 @@ namespace App\Http\Resources\Users;
 
 use App\Http\Resources\Roles\RoleResource;
 use App\Models\Users\User;
+use App\Services\Traits\Resources\ConditionallyLoadFields;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class UserResource extends JsonResource
 {
+    use ConditionallyLoadFields;
+
     /** @var User $resource */
     public $resource;
 
@@ -29,8 +32,16 @@ class UserResource extends JsonResource
     {
         return [
             'id' => $this->resource->getId(),
-            'role' => new RoleResource($this->whenLoaded('roleRelation')),
-            'token' => $this->resource->createToken('auth_token')->plainTextToken,
+            'role' => $this->whenFieldRequired(
+                $request,
+                'related-role',
+                new RoleResource($this->resource->roleRelation()->first())
+            ),
+            'token' => $this->whenFieldRequired(
+                $request,
+                'token',
+                $this->resource->createToken('auth_token')->plainTextToken
+            ),
         ];
     }
 }
