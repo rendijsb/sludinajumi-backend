@@ -30,6 +30,7 @@ class UserResource extends JsonResource
         return [
             'id' => $this->resource->getId(),
             'role' => new RoleResource($this->whenLoaded('roleRelation')),
+            'token' => $this->resource->createToken('auth_token')->plainTextToken,
         ];
     }
 }

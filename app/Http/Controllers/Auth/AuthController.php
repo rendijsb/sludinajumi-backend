@@ -13,37 +13,24 @@ use App\Services\Repositories\UserDbRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
+use Spatie\DataTransferObject\Exceptions\UnknownProperties;
 
 class AuthController extends Controller
 {
     public function __construct(
         private readonly UserLogicRepository $userLogicRepository,
-        private readonly UserDbRepository $userDbRepository
-    ) {}
-
-    public function register(RegisterRequest $request): JsonResponse
+        private readonly UserDbRepository    $userDbRepository
+    )
     {
-        try {
-            $user = $this->userLogicRepository->register($request->data());
+    }
 
-            $token = $user->createToken('auth_token')->plainTextToken;
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Reģistrācija veiksmīga',
-                'data' => [
-                    'user' => new UserResource($user->load('roleRelation')),
-                    'token' => $token,
-                ]
-            ], 201);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Reģistrācija neizdevās',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+    /**
+     * @throws UnknownProperties
+     */
+    public function register(RegisterRequest $request): UserResource
+    {
+        return $request->responseResource($this->userLogicRepository->register($request->data()));
     }
 
     public function login(LoginRequest $request): JsonResponse

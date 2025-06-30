@@ -53,6 +53,6 @@ class RegisterRequest extends FormRequest
 
     public function responseResource(User $user): UserResource
     {
-        return UserResource::make($user);
+        return UserResource::make($user->load('roleRelation'));
     }
 }
