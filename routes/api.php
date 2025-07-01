@@ -11,15 +11,19 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
+Route::get('/sanctum/csrf-cookie', function () {
+    return response()->json(['message' => 'CSRF cookie set']);
+});
+
 Route::prefix('v1')->group(function () {
+    // Public authentication routes
+    Route::post('/register', [AuthController::class, 'register'])->name('api.register');
+    Route::post('/login', [AuthController::class, 'login'])->name('api.login');
 
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
-
+    // Protected routes (require Sanctum token authentication)
     Route::middleware(['auth:sanctum'])->group(function () {
-        Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/me', [AuthController::class, 'me']);
-        Route::post('/refresh', [AuthController::class, 'refresh']);
+        Route::post('/logout', [AuthController::class, 'logout'])->name('api.logout');
+        Route::get('/me', [AuthController::class, 'me'])->name('api.me');
+        Route::post('/refresh', [AuthController::class, 'refresh'])->name('api.refresh');
     });
-
 });
