@@ -37,11 +37,27 @@ class UserResource extends JsonResource
                 'related-role',
                 new RoleResource($this->resource->roleRelation()->first())
             ),
-            'token' => $this->whenFieldRequired(
-                $request,
-                'token',
-                $this->resource->createToken('auth_token')->plainTextToken
+            'token' => $this->when(
+                $this->shouldIncludeToken($request),
+                fn() => $this->resource->createToken('auth_token')->plainTextToken
             ),
         ];
+    }
+
+    /**
+     * Determine if token should be included in the response
+     */
+    private function shouldIncludeToken(Request $request): bool
+    {
+        $authRoutes = ['login', 'register', 'refresh'];
+        $currentRoute = $request->route()?->getName() ?? '';
+
+        foreach ($authRoutes as $route) {
+            if (str_contains($currentRoute, $route)) {
+                return true;
+            }
+        }
+
+        return $this->requestHasFields($request, 'token', 'fields');
     }
 }

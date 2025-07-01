@@ -18,20 +18,24 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
         ]);
 
-        User::create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => Hash::make('password'),
-            'role_id' => 2,
-            'is_active' => true,
-        ]);
+        User::firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'password' => Hash::make('password'),
+                'role_id' => 2,
+                'is_active' => true,
+            ]
+        );
 
-        User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
-            'password' => Hash::make('password'),
-            'role_id' => 1,
-            'is_active' => true,
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Admin User',
+                'password' => Hash::make('password'),
+                'role_id' => 1,
+                'is_active' => true,
+            ]
+        );
     }
 }

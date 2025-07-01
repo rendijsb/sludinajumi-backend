@@ -27,10 +27,10 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            self::NAME => ['required', 'string', 'max:255'],
+            self::NAME => ['required', 'string', 'min:2', 'max:255'],
             self::EMAIL => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            self::PHONE => ['nullable', 'string', 'max:20', 'unique:users'],
-            self::PASSWORD => ['required', 'confirmed', Password::defaults()],
+            self::PHONE => ['nullable', 'string', 'max:20', 'unique:users', 'regex:/^[\+]?[0-9\s\-\(\)]+$/'],
+            self::PASSWORD => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
             self::TERMS_ACCEPTED => ['required', 'accepted'],
         ];
     }
@@ -47,12 +47,17 @@ class RegisterRequest extends FormRequest
             RegisterRequestData::EMAIL => $this->get(self::EMAIL),
             RegisterRequestData::PHONE => $this->get(self::PHONE),
             RegisterRequestData::PASSWORD => $this->get(self::PASSWORD),
-            RegisterRequestData::TERMS_ACCEPTED => $this->get(self::TERMS_ACCEPTED),
+            RegisterRequestData::TERMS_ACCEPTED => $this->boolean(self::TERMS_ACCEPTED),
         ]);
     }
 
     public function responseResource(User $user): UserResource
     {
-        return UserResource::make($user->load('roleRelation'));
+        $resource = UserResource::make($user->load('roleRelation'));
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+        $resource->additional(['token' => $token]);
+
+        return $resource;
     }
 }
