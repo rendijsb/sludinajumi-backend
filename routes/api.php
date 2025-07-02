@@ -9,13 +9,20 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
+| These routes are for token-based API authentication only.
+| They don't use CSRF tokens or sessions.
 */
 
-Route::get('/sanctum/csrf-cookie', function () {
-    return response()->json(['message' => 'CSRF cookie set']);
-});
-
 Route::prefix('v1')->group(function () {
+    // Test endpoint to verify API is working
+    Route::get('/test', function () {
+        return response()->json([
+            'message' => 'API is working!',
+            'timestamp' => now(),
+            'environment' => app()->environment(),
+        ]);
+    });
+
     // Public authentication routes
     Route::post('/register', [AuthController::class, 'register'])->name('api.register');
     Route::post('/login', [AuthController::class, 'login'])->name('api.login');
